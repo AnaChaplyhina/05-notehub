@@ -3,9 +3,10 @@ import css from './NoteList.module.css';
 
 interface NoteListProps {
   notes: Note[];
+  onDelete: (id: string) => void; 
 }
 
-const NoteList = ({ notes }: NoteListProps) => {
+const NoteList = ({ notes, onDelete }: NoteListProps) => {
   if (notes.length === 0) {
     return <p style={{ textAlign: 'center', marginTop: 20 }}>No notes found</p>;
   }
@@ -18,7 +19,12 @@ const NoteList = ({ notes }: NoteListProps) => {
           <p className={css.content}>{note.content}</p>
           <div className={css.footer}>
             <span className={css.tag}>{note.tag}</span>
-            <button className={css.button} type="button">
+         
+            <button 
+              className={css.button} 
+              type="button"
+              onClick={() => onDelete(note.id)}
+            >
               Delete
             </button>
           </div>
