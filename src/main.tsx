@@ -1,10 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import 'modern-normalize'; 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import 'modern-normalize';
 import './index.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, 
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <h1>Привіт! Проєкт працює!</h1>
+    <QueryClientProvider client={queryClient}>
+       <h1>Фундамент готовий!</h1>
+    </QueryClientProvider>
   </React.StrictMode>
 );
