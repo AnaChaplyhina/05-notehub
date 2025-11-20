@@ -16,33 +16,32 @@ const App = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 500);
   
+  // Стан для відкриття модалки
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
+  // 1. Отримання нотаток
   const { data, isLoading, isError } = useQuery({
     queryKey: ['notes', page, debouncedSearch],
     queryFn: () => fetchNotes({ page, perPage: 9, search: debouncedSearch }),
   });
 
+  // 2. Мутація: Створення нотатки
   const createMutation = useMutation({
     mutationFn: createNote,
     onSuccess: () => {
-     
       queryClient.invalidateQueries({ queryKey: ['notes'] });
-      setIsModalOpen(false); 
+      setIsModalOpen(false);
     },
   });
-
 
   const deleteMutation = useMutation({
     mutationFn: deleteNote,
     onSuccess: () => {
-     
       queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
   });
-
 
   const handleSearchChange = (newValue: string) => {
     setSearch(newValue);
@@ -64,6 +63,14 @@ const App = () => {
       <header className={css.toolbar}>
         <SearchBox value={search} onChange={handleSearchChange} />
         
+        {data && data.totalPages > 1 && (
+             <Pagination 
+              totalPages={data.totalPages} 
+              currentPage={page} 
+              onPageChange={setPage} 
+            />
+        )}
+
         <button 
           className={css.createBtn} 
           onClick={() => setIsModalOpen(true)}
@@ -79,14 +86,7 @@ const App = () => {
       {isError && <p className={css.error}>Error loading notes!</p>}
 
       {data && (
-        <>
           <NoteList notes={data.notes} onDelete={handleDeleteNote} />
-          <Pagination 
-            totalPages={data.totalPages} 
-            currentPage={page} 
-            onPageChange={setPage} 
-          />
-        </>
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
