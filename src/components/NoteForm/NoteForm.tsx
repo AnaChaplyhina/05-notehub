@@ -1,7 +1,10 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { useMutation, useQueryClient } from '@tanstack/react-query'; 
+import { createNote } from '../../services/noteService';
 import { CreateNoteDto } from '../../types/note';
 import css from './NoteForm.module.css';
+
 
 const ValidationSchema = Yup.object().shape({
   title: Yup.string()
@@ -9,23 +12,33 @@ const ValidationSchema = Yup.object().shape({
     .max(50, 'Too Long!')
     .required('Required'),
   content: Yup.string()
-    .max(500, 'Too Long!')
-    .required('Required'), 
+    .max(500, 'Too Long!'), 
   tag: Yup.string()
     .oneOf(['Todo', 'Work', 'Personal', 'Meeting', 'Shopping'])
     .required('Required'),
 });
 
 interface NoteFormProps {
-  onSubmit: (values: CreateNoteDto) => void;
-  onCancel: () => void;
+  onClose: () => void; 
 }
 
-const NoteForm = ({ onSubmit, onCancel }: NoteFormProps) => {
+const NoteForm = ({ onClose }: NoteFormProps) => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      
+      onClose();
+    },
+  });
+
   const initialValues: CreateNoteDto = {
     title: '',
     content: '',
-    tag: 'Todo', // Значення за замовчуванням
+    tag: 'Todo',
   };
 
   return (
@@ -33,7 +46,8 @@ const NoteForm = ({ onSubmit, onCancel }: NoteFormProps) => {
       initialValues={initialValues}
       validationSchema={ValidationSchema}
       onSubmit={(values, { resetForm }) => {
-        onSubmit(values);
+       
+        mutation.mutate(values);
         resetForm();
       }}
     >
@@ -73,11 +87,15 @@ const NoteForm = ({ onSubmit, onCancel }: NoteFormProps) => {
           </div>
 
           <div className={css.actions}>
-            <button type="button" className={css.cancelButton} onClick={onCancel}>
+            <button type="button" className={css.cancelButton} onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className={css.submitButton} disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create note'}
+            <button 
+              type="submit" 
+              className={css.submitButton} 
+              disabled={isSubmitting || mutation.isPending} 
+            >
+              {mutation.isPending ? 'Creating...' : 'Create note'}
             </button>
           </div>
         </Form>

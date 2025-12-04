@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
-import { fetchNotes, createNote, deleteNote } from '../../services/noteService';
-import { CreateNoteDto } from '../../types/note';
+import { fetchNotes } from '../../services/noteService';
 
 import NoteList from '../NoteList/NoteList';
 import SearchBox from '../SearchBox/SearchBox';
@@ -15,47 +14,17 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 500);
-  
-  // Стан для відкриття модалки
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const queryClient = useQueryClient();
-
-  // 1. Отримання нотаток
   const { data, isLoading, isError } = useQuery({
     queryKey: ['notes', page, debouncedSearch],
     queryFn: () => fetchNotes({ page, perPage: 9, search: debouncedSearch }),
-  });
-
-  // 2. Мутація: Створення нотатки
-  const createMutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-      setIsModalOpen(false);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
+    placeholderData: keepPreviousData, 
   });
 
   const handleSearchChange = (newValue: string) => {
     setSearch(newValue);
     setPage(1);
-  };
-
-  const handleCreateNote = (noteData: CreateNoteDto) => {
-    createMutation.mutate(noteData);
-  };
-
-  const handleDeleteNote = (id: string) => {
-    if (confirm('Are you sure you want to delete this note?')) {
-      deleteMutation.mutate(id);
-    }
   };
 
   return (
@@ -79,21 +48,19 @@ const App = () => {
         </button>
       </header>
 
-      {(isLoading || createMutation.isPending || deleteMutation.isPending) && (
+      {isLoading && !data && (
         <div style={{textAlign: 'center', margin: 10}}>Loading...</div>
       )}
       
       {isError && <p className={css.error}>Error loading notes!</p>}
 
       {data && (
-          <NoteList notes={data.notes} onDelete={handleDeleteNote} />
+          
+          <NoteList notes={data.notes} />
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <NoteForm 
-          onSubmit={handleCreateNote} 
-          onCancel={() => setIsModalOpen(false)} 
-        />
+        <NoteForm onClose={() => setIsModalOpen(false)} />
       </Modal>
     </div>
   );

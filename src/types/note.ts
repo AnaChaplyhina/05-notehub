@@ -6,19 +6,12 @@ export interface Note {
   title: string;
   content: string;
   tag: NoteTag;
-  date: string; 
+  createdAt: string; 
+  updatedAt: string; 
 }
 
 export interface CreateNoteDto {
   title: string;
   content: string;
   tag: NoteTag;
-}
-
-export interface FetchNotesResponse {
-  notes: Note[];
-  total: number;
-  page: number;
-  perPage: number;
-  totalPages: number;
 }
